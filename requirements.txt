@@ -1,0 +1,5 @@
+uvicorn
+python-dotenv
+redis
+secrets
+fastapi
