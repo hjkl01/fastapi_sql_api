@@ -34,7 +34,7 @@ def read_current_user(username: str = Depends(get_current_username)):
 
 
 @app.post("/lpush/{db}/{key}/{value}")
-def redis_lpush(
+async def redis_lpush(
     db: int,
     key: str,
     value: str,
@@ -47,12 +47,18 @@ def redis_lpush(
         db=db,
     )
     r.lpush(key, value)
+    length = r.llen(key)
     r.close()
-    return {"success": "OK", "created_at": datetime.now(), "result": None}
+    return {
+        "success": "OK",
+        "created_at": datetime.now(),
+        "result": None,
+        "length": length,
+    }
 
 
 @app.post("/lpop/{db}/{key}")
-def redis_lpop(
+async def redis_lpop(
     db: int,
     key: str,
     username: str = Depends(get_current_username),
@@ -64,5 +70,11 @@ def redis_lpop(
         db=db,
     )
     result = r.lpop(key)
+    length = r.llen(key)
     r.close()
-    return {"success": "OK", "created_at": datetime.now(), "result": result}
+    return {
+        "success": "OK",
+        "created_at": datetime.now(),
+        "result": result,
+        "length": length,
+    }
