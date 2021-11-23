@@ -1,4 +1,5 @@
 import os
+import json
 from datetime import datetime
 
 import redis
@@ -6,6 +7,8 @@ import secrets
 from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, HTTPException, status
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
+from pydantic import BaseModel
+from loguru import logger
 
 app = FastAPI()
 security = HTTPBasic()
@@ -28,26 +31,36 @@ def get_current_username(credentials: HTTPBasicCredentials = Depends(security)):
     return credentials.username
 
 
+@app.post("/")
+async def index():
+    return {"Hello": "World !"}
+
+
 @app.post("/users/me")
 def read_current_user(username: str = Depends(get_current_username)):
     return {"username": username}
 
 
-@app.post("/lpush/{db}/{key}/{value}")
+class Item(BaseModel):
+    db: int
+    key: str
+    value: dict = None
+
+
+@app.post("/lpush/")
 async def redis_lpush(
-    db: int,
-    key: str,
-    value: str,
+    item: Item,
     username: str = Depends(get_current_username),
 ) -> dict:
+    logger.info(item)
     r = redis.Redis(
         host=os.getenv("redis_host"),
         port=os.getenv("redis_port"),
         password=os.getenv("redis_password"),
-        db=db,
+        db=item.db,
     )
-    r.lpush(key, value)
-    length = r.llen(key)
+    r.lpush(item.key, json.dumps(item.value, ensure_ascii=False))
+    length = r.llen(item.key)
     r.close()
     return {
         "success": "OK",
@@ -57,20 +70,21 @@ async def redis_lpush(
     }
 
 
-@app.post("/lpop/{db}/{key}")
-async def redis_lpop(
-    db: int,
-    key: str,
+@app.post("/rpop/")
+async def redis_rpop(
+    item: Item,
     username: str = Depends(get_current_username),
 ) -> dict:
     r = redis.Redis(
         host=os.getenv("redis_host"),
         port=os.getenv("redis_port"),
         password=os.getenv("redis_password"),
-        db=db,
+        db=item.db,
     )
-    result = r.lpop(key)
-    length = r.llen(key)
+    result = r.rpop(item.key)
+    if result:
+        result = json.loads(result)
+    length = r.llen(item.key)
     r.close()
     return {
         "success": "OK",
