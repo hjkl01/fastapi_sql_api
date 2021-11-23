@@ -3,3 +3,4 @@ fastapi
 python-secrets
 python-dotenv
 redis
+loguru
