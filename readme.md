@@ -16,5 +16,6 @@ python test.py
 git clone https://github.com/lesssound/fastapi_redis
 cd fastapi_redis 
 # update .env and config/redis.conf
+mkdir -p data/redis
 docker-compose up -d
 ```
