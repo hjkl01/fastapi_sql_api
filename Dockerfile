@@ -9,6 +9,7 @@ ENV LANG C.UTF-8
 
 WORKDIR /app
 COPY ./main.py /app/main.py
+COPY ./.env /app/.env
 COPY ./requirements.txt /app/requirements.txt
 
 RUN pip3 install -r /app/requirements.txt -i https://mirrors.aliyun.com/pypi/simple/
