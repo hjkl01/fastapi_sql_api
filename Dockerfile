@@ -1,14 +1,16 @@
-FROM ubuntu:20.04
+FROM alpine:3.15.0
 
-# remove several traces of debian python
-RUN apt-get update -y && apt-get install python3-dev -y && apt-get autoremove -y && apt-get autoclean -y
+RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
+RUN apk add --no-cache python3 python3-dev py-pip g++ gcc libxml2 libxslt musl-dev libxslt-dev linux-headers
 
 # http://bugs.python.org/issue19846
 # > At the moment, setting "LANG=C" on a Linux system *fundamentally breaks Python 3*, and that's not OK.
 ENV LANG C.UTF-8
 
-COPY . /app
+WORKDIR /app
+COPY ./main.py /app/main.py
+COPY ./requirements.txt /app/requirements.txt
 
-RUN pip3 install -r /app/requirements.txt
+RUN pip3 install -r /app/requirements.txt -i https://mirrors.aliyun.com/pypi/simple/
 
-CMD ["cd", "/app", "uvicorn", "main:app", "--host=0.0.0.0","--port=7999"]
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "7999"]
