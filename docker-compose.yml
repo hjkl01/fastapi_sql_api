@@ -1,0 +1,31 @@
+version: '3'
+
+services:
+
+
+  redis:
+      image: redis
+      container_name: redis
+      restart: unless-stopped
+      # command: redis-server --requirepass password
+      command: redis-server /usr/local/etc/redis/redis.conf
+      ports:
+        - 6379:6379
+      volumes:
+        - ./config/redis.conf:/usr/local/etc/redis/redis.conf
+        - ./data/redis:/data/
+
+  app:
+    build: .
+    container_name: fastapi_app
+    restart: unless-stopped
+    ports:
+      - 7999:7999
+    depends_on:
+      - redis
+    links:
+      - redis
+    volumes:
+      - ./:/app
+
+

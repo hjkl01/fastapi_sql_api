@@ -54,9 +54,9 @@ async def redis_lpush(
 ) -> dict:
     logger.info(item)
     r = redis.Redis(
-        host=os.getenv("redis_host"),
-        port=os.getenv("redis_port"),
-        password=os.getenv("redis_password"),
+        host=os.getenv("redis_host", "redis"),
+        port=os.getenv("redis_port", 6379),
+        password=os.getenv("redis_password", "password"),
         db=item.db,
     )
     r.lpush(item.key, json.dumps(item.value, ensure_ascii=False))
@@ -76,9 +76,9 @@ async def redis_rpop(
     username: str = Depends(get_current_username),
 ) -> dict:
     r = redis.Redis(
-        host=os.getenv("redis_host"),
-        port=os.getenv("redis_port"),
-        password=os.getenv("redis_password"),
+        host=os.getenv("redis_host", "redis"),
+        port=os.getenv("redis_port", 6379),
+        password=os.getenv("redis_password", "password"),
         db=item.db,
     )
     result = r.rpop(item.key)
