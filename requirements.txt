@@ -1,6 +1,7 @@
 uvicorn
 fastapi
 python-secrets
-python-dotenv
 redis
+pymongo
 loguru
+dynaconf

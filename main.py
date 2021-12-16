@@ -1,10 +1,10 @@
-import os
 import json
 from datetime import datetime
 
+from dynaconf import Dynaconf
 import redis
+import pymongo
 import secrets
-from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, HTTPException, status
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from pydantic import BaseModel
@@ -12,21 +12,15 @@ from loguru import logger
 
 app = FastAPI()
 security = HTTPBasic()
-load_dotenv()
+
+Config = Dynaconf(settings_files=['.secrets.toml'])
 
 
 def get_current_username(credentials: HTTPBasicCredentials = Depends(security)):
-    correct_username = secrets.compare_digest(credentials.username, os.getenv("user"))
-    correct_password = secrets.compare_digest(
-        credentials.password, os.getenv("password")
-    )
+    correct_username = secrets.compare_digest(credentials.username, Config.user)
+    correct_password = secrets.compare_digest(credentials.password, Config.password)
     if not (correct_username and correct_password):
-
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect email or password",
-            headers={"WWW-Authenticate": "Basic"},
-        )
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect email or password", headers={"WWW-Authenticate": "Basic"})
 
     return credentials.username
 
@@ -41,22 +35,19 @@ def read_current_user(username: str = Depends(get_current_username)):
     return {"username": username}
 
 
-class Item(BaseModel):
+class RedisItem(BaseModel):
     db: int
     key: str
     value: dict = None
 
 
-@app.post("/lpush/")
-async def redis_lpush(
-    item: Item,
-    username: str = Depends(get_current_username),
-) -> dict:
+@app.post("/redis/lpush/")
+async def redis_lpush(item: RedisItem, username: str = Depends(get_current_username)) -> dict:
     logger.info(item)
     r = redis.Redis(
-        host=os.getenv("redis_host", "redis"),
-        port=os.getenv("redis_port", 6379),
-        password=os.getenv("redis_password", "password"),
+        host=Config.redis_host,
+        port=Config.redis_port,
+        password=Config.redis_password,
         db=item.db,
     )
     r.lpush(item.key, json.dumps(item.value, ensure_ascii=False))
@@ -70,15 +61,12 @@ async def redis_lpush(
     }
 
 
-@app.post("/rpop/")
-async def redis_rpop(
-    item: Item,
-    username: str = Depends(get_current_username),
-) -> dict:
+@app.post("/redis/rpop/")
+async def redis_rpop(item: RedisItem, username: str = Depends(get_current_username)) -> dict:
     r = redis.Redis(
-        host=os.getenv("redis_host", "redis"),
-        port=os.getenv("redis_port", 6379),
-        password=os.getenv("redis_password", "password"),
+        host=Config.redis_host,
+        port=Config.redis_port,
+        password=Config.redis_password,
         db=item.db,
     )
     result = r.rpop(item.key)
@@ -91,4 +79,71 @@ async def redis_rpop(
         "created_at": datetime.now(),
         "result": result,
         "length": length,
+    }
+
+
+class MongoAPI:
+    def __init__(self, db="db", tablename="tablename"):
+        self.uri = Config.MONGO_URI
+        self.myclient = pymongo.MongoClient(self.uri)
+        mydb = self.myclient[db]
+        self.mycol = mydb[tablename]
+
+    # values = {"abr": 1}
+    def query(self, myquery={"name": "somename"}, values=None):
+        return [q for q in self.mycol.find(myquery, values)]
+
+    def save(self, data):
+        try:
+            self.mycol.insert_one(data)
+            logger.info("save success ", data)
+            return True
+        except Exception as err:
+            if "duplicate key" in str(err):
+                logger.info("duplicate key")
+            else:
+                logger.info(err)
+                return False
+
+    def update(self, _id, _key, data):
+        myquery = {"id": _id}
+        newvalues = {"$set": {_key: data}}
+        self.mycol.update_one(myquery, newvalues)
+        logger.info(f"update success {_id}")
+        return True
+
+    def quit(self):
+        self.myclient.close()
+
+
+class MongoItem(BaseModel):
+    db: str
+    tablename: str
+    query: dict = None
+    values: dict = None
+
+
+@app.post("/mongo/insert/")
+async def mongo_insert(item: MongoItem, username: str = Depends(get_current_username)) -> dict:
+    logger.info(item)
+    mongoapi = MongoAPI(db=item.db, tablename=item.tablename)
+    mongoapi.save(item.values)
+    mongoapi.quit()
+    return {
+        "success": "OK",
+        "created_at": datetime.now(),
+        "result": None,
+    }
+
+
+@app.post("/mongo/query/")
+async def mongo_query(item: MongoItem, username: str = Depends(get_current_username)) -> dict:
+    logger.info(item)
+    mongoapi = MongoAPI(db=item.db, tablename=item.tablename)
+    result = mongoapi.query(myquery=item.query, values=item.values)
+    mongoapi.quit()
+    return {
+        "success": "OK",
+        "created_at": datetime.now(),
+        "result": result,
     }
