@@ -21,6 +21,8 @@ services:
     restart: unless-stopped
     ports:
       - 6380:6380
+    volumes:
+      - ./:/app
     depends_on:
       - redis
     links:
