@@ -2,26 +2,26 @@ import json
 import time
 from threading import Thread
 
+from dynaconf import Dynaconf
 from loguru import logger
 import requests
 from requests.auth import HTTPBasicAuth
 
-from main import Config
 
-
-host = "127.0.0.1:8000"
+Config = Dynaconf(settings_files=['.secrets.toml'])
 
 
 def send_request(url, data):
-    resp = requests.post(url, data=json.dumps(data, ensure_ascii=False).encode("utf-8"), auth=HTTPBasicAuth(Config.user, Config.password))
+    resp = requests.post(url, data=json.dumps(data, ensure_ascii=False).encode(
+        "utf-8"), auth=HTTPBasicAuth(Config.user, Config.password))
     logger.info(f"{resp.status_code}, {resp.json()}")
     return resp
 
 
 def redis_test():
     urls = [
-        f"http://{host}/redis/lpush/",
-        f"http://{host}/redis/rpop/",
+        f"http://{Config.host}/redis/lpush/",
+        f"http://{Config.host}/redis/rpop/",
     ]
     for i in range(3):
         for url in urls:
@@ -35,7 +35,7 @@ def redis_test():
 
 
 def mongo_test():
-    url = f'http://{host}/mongo/insert/'
+    url = f'http://{Config.host}/mongo/insert/'
     for i in range(100):
         db = 'test'
         tablename = 'test'
