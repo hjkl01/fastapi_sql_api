@@ -1,6 +1,7 @@
 import json
 from datetime import datetime
 
+import uvicorn
 from dynaconf import Dynaconf
 import redis
 import pymongo
@@ -10,7 +11,20 @@ from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from pydantic import BaseModel
 from loguru import logger
 
-app = FastAPI()
+from starlette.middleware import Middleware
+from starlette.middleware.cors import CORSMiddleware
+
+origins = [
+    "http://localhost:5000",
+]
+
+middleware = [
+    Middleware(CORSMiddleware, allow_origins=origins)
+]
+
+app = FastAPI(middleware=middleware)
+
+#  app = FastAPI()
 security = HTTPBasic()
 
 Config = Dynaconf(settings_files=['.secrets.toml'])
@@ -150,3 +164,7 @@ async def mongo_query(item: MongoItem, username: str = Depends(get_current_usern
         "created_at": datetime.now(),
         "result": result,
     }
+
+
+if __name__ == "__main__":
+    uvicorn.run(app, host="0.0.0.0", debug=True, port=6380, log_level="debug")
