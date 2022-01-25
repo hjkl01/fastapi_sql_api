@@ -18,26 +18,25 @@ origins = [
     "http://localhost:5000",
 ]
 
-middleware = [
-    Middleware(CORSMiddleware, allow_origins=origins)
-]
+middleware = [Middleware(CORSMiddleware, allow_origins=origins)]
 
 app = FastAPI(middleware=middleware)
 
 #  app = FastAPI()
 security = HTTPBasic()
 
-Config = Dynaconf(settings_files=['.secrets.toml'])
+Config = Dynaconf(settings_files=[".secrets.toml"])
 
 
 def get_current_username(credentials: HTTPBasicCredentials = Depends(security)):
-    correct_username = secrets.compare_digest(
-        credentials.username, Config.user)
-    correct_password = secrets.compare_digest(
-        credentials.password, Config.password)
+    correct_username = secrets.compare_digest(credentials.username, Config.user)
+    correct_password = secrets.compare_digest(credentials.password, Config.password)
     if not (correct_username and correct_password):
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
-                            detail="Incorrect email or password", headers={"WWW-Authenticate": "Basic"})
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect email or password",
+            headers={"WWW-Authenticate": "Basic"},
+        )
 
     return credentials.username
 
@@ -59,7 +58,9 @@ class RedisItem(BaseModel):
 
 
 @app.post("/redis/lpush/")
-async def redis_lpush(item: RedisItem, username: str = Depends(get_current_username)) -> dict:
+async def redis_lpush(
+    item: RedisItem, username: str = Depends(get_current_username)
+) -> dict:
     logger.info(item)
     r = redis.Redis(
         host=Config.redis_host,
@@ -73,13 +74,15 @@ async def redis_lpush(item: RedisItem, username: str = Depends(get_current_usern
     return {
         "success": "OK",
         "created_at": datetime.now(),
-        "result": None,
+        "result": item.value,
         "length": length,
     }
 
 
 @app.post("/redis/rpop/")
-async def redis_rpop(item: RedisItem, username: str = Depends(get_current_username)) -> dict:
+async def redis_rpop(
+    item: RedisItem, username: str = Depends(get_current_username)
+) -> dict:
     r = redis.Redis(
         host=Config.redis_host,
         port=Config.redis_port,
@@ -134,14 +137,16 @@ class MongoAPI:
 
 
 class MongoItem(BaseModel):
-    db: str = 'test'
-    tablename: str = 'tablename'
+    db: str = "test"
+    tablename: str = "tablename"
     query: dict = None
     values: dict = None
 
 
 @app.post("/mongo/insert/")
-async def mongo_insert(item: MongoItem, username: str = Depends(get_current_username)) -> dict:
+async def mongo_insert(
+    item: MongoItem, username: str = Depends(get_current_username)
+) -> dict:
     logger.info(item)
     mongoapi = MongoAPI(db=item.db, tablename=item.tablename)
     mongoapi.save(item.values)
@@ -149,12 +154,14 @@ async def mongo_insert(item: MongoItem, username: str = Depends(get_current_user
     return {
         "success": "OK",
         "created_at": datetime.now(),
-        "result": None,
+        "result": item.values,
     }
 
 
 @app.post("/mongo/query/")
-async def mongo_query(item: MongoItem, username: str = Depends(get_current_username)) -> dict:
+async def mongo_query(
+    item: MongoItem, username: str = Depends(get_current_username)
+) -> dict:
     logger.info(item)
     mongoapi = MongoAPI(db=item.db, tablename=item.tablename)
     result = mongoapi.query(myquery=item.query, values=item.values)
