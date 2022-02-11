@@ -44,6 +44,7 @@ def redis_test():
 
 
 def mongo_test():
+    # insert
     url = f"http://{Config.host}/mongo/insert/"
     for i in range(10):
         print(url)
@@ -60,6 +61,18 @@ def mongo_test():
         )
         t.start()
         time.sleep(0.1)
+
+    # query
+    url = f"http://{Config.host}/mongo/query/"
+    data = {
+        "db": "test",
+        "tablename": "test",
+        "query": {"_id": 1},
+        "values": {"_id": 1},
+    }
+    resp = send_request(url, data=data)
+    print(resp.status_code)
+    print(resp.json())
 
 
 if __name__ == "__main__":
