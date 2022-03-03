@@ -88,7 +88,7 @@ class RedisAPi:
 
     #  @app.post("/redis/rpop/")
     async def redis_rpop(
-        item: RedisItem, username: str = Depends(get_current_username)
+        self, item: RedisItem, username: str = Depends(get_current_username)
     ) -> dict:
         logger.info("redis_rpop: {}".format(item))
         r = self.connect_redis(item.db)
@@ -109,8 +109,8 @@ class MongoItem(BaseModel):
     db: str = "test"
     tablename: str = "tablename"
     query: dict = None
-    limit: int = 1
     values: dict = None
+    limit: int = 1
 
 
 class MongoAPI:
@@ -161,12 +161,26 @@ class MongoAPI:
             "result": result,
         }
 
-    #  def update(self, _id, _key, data):
-    #      myquery = {"id": _id}
-    #      newvalues = {"$set": {_key: data}}
-    #      self.mycol.update_one(myquery, newvalues)
-    #      logger.info(f"update success {_id}")
-    #      return True
+    async def mongo_update(
+        self, item: MongoItem, username: str = Depends(get_current_username)
+    ):
+        logger.info(item)
+        mgclient, mgcol = self.connect_mongo(db=item.db, tablename=item.tablename)
+
+        result = None
+        try:
+            #  myquery = { "name": { "$regex": "^F" } }
+            #  newvalues = {"$set": {"comments": "values"}}
+            self.mgcol.update(item.query, item.values)
+        except Exception as err:
+            logger.info(err)
+            result = str(err)
+        mgclient.close()
+        return {
+            "success": "OK",
+            "created_at": datetime.now(),
+            "result": result,
+        }
 
 
 app.add_api_route("/", index)
@@ -177,6 +191,7 @@ app.add_api_route("/redis/rpop/", redis_api.redis_rpop, methods=["POST"])
 mongo_api = MongoAPI()
 app.add_api_route("/mongo/insert/", mongo_api.mongo_insert, methods=["POST"])
 app.add_api_route("/mongo/query/", mongo_api.mongo_query, methods=["POST"])
+app.add_api_route("/mongo/update/", mongo_api.mongo_update, methods=["POST"])
 
 
 if __name__ == "__main__":

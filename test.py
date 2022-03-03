@@ -43,13 +43,13 @@ def redis_test():
             time.sleep(0.1)
 
 
-def mongo_test():
+def mongo_test_insert():
     # insert
     url = f"http://{Config.host}/mongo/insert/"
     for i in range(10):
         print(url)
         db = "test"
-        tablename = "test"
+        tablename = "tablename"
         values = {"_id": i, "values": f"value_{i}"}
         data = {"db": db, "tablename": tablename, "values": values}
         t = Thread(
@@ -62,13 +62,17 @@ def mongo_test():
         t.start()
         time.sleep(0.1)
 
+
+def mongo_test_query():
     # query
     url = f"http://{Config.host}/mongo/query/"
     data = {
-        "db": "test",
-        "tablename": "test",
-        "query": {"_id": 1},
+        "db": "data",
+        "tablename": "tablename",
+        "query": None,
+        #  "query": {"_id": "1"},
         "values": {"_id": 1},
+        "limit": 2,
     }
     resp = send_request(url, data=data)
     print(resp.status_code)
@@ -76,5 +80,6 @@ def mongo_test():
 
 
 if __name__ == "__main__":
-    redis_test()
-    mongo_test()
+    #  redis_test()
+    mongo_test_insert()
+    mongo_test_query()
