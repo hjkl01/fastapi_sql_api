@@ -12,7 +12,7 @@ COPY ./main.py /app/main.py
 COPY ./.secrets.toml /app/.secrets.toml
 COPY ./requirements.txt /app/requirements.txt
 
-RUN pip3 install --upgrade pipe -i https://mirrors.aliyun.com/pypi/simple/
+RUN pip3 install --upgrade pip -i https://mirrors.aliyun.com/pypi/simple/
 RUN pip3 install -r /app/requirements.txt --ignore-installed -i https://mirrors.aliyun.com/pypi/simple/
 
 CMD ["uvicorn", "main:app", "--workers=4","--host", "0.0.0.0", "--port", "6380"]
