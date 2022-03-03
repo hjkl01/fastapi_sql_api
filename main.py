@@ -145,7 +145,6 @@ class MongoAPI:
             "success": "OK" if result is None else "NG",
             "result": result,
             "created_at": datetime.now(),
-            "result": item.values,
         }
 
     async def mongo_query(
