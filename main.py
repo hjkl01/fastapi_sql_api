@@ -1,4 +1,3 @@
-from importlib import reload
 import json
 from datetime import datetime
 
@@ -153,7 +152,10 @@ class MongoAPI:
         logger.info(item)
         mgclient, mgcol = self.connect_mongo(db=item.db, tablename=item.tablename)
         # values = {"abr": 1}
-        result = [q for q in mgcol.find(item.query, item.values).limit(item.limit)]
+        if item.limit:
+            result = [q for q in mgcol.find(item.query, item.values).limit(item.limit)]
+        else:
+            result = [q for q in mgcol.find(item.query, item.values)]
         mgclient.close()
         return {
             "success": "OK",
@@ -171,7 +173,7 @@ class MongoAPI:
         try:
             #  myquery = { "name": { "$regex": "^F" } }
             #  newvalues = {"$set": {"comments": "values"}}
-            self.mgcol.update(item.query, item.values)
+            mgcol.update(item.query, item.values)
         except Exception as err:
             logger.info(err)
             result = str(err)
