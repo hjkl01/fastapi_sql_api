@@ -12,6 +12,7 @@ Config = Dynaconf(settings_files=[".secrets.toml"])
 
 
 def send_request(url, data):
+    print(json.dumps(data, ensure_ascii=False).encode("utf-8"))
     resp = requests.post(
         url,
         data=json.dumps(data, ensure_ascii=False).encode("utf-8"),
@@ -67,12 +68,14 @@ def mongo_test_query():
     # query
     url = f"http://{Config.host}/mongo/query/"
     data = {
-        "db": "data",
+        "db": "test",
         "tablename": "tablename",
         "query": None,
         #  "query": {"_id": "1"},
         "values": {"_id": 1},
-        "limit": 2,
+        #  "values": None,
+        "limit": 10,
+        #  "limit": False,
     }
     resp = send_request(url, data=data)
     print(resp.status_code)
@@ -81,5 +84,5 @@ def mongo_test_query():
 
 if __name__ == "__main__":
     #  redis_test()
-    mongo_test_insert()
+    #  mongo_test_insert()
     mongo_test_query()

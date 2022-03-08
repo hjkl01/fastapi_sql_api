@@ -13,7 +13,7 @@ pip install -r ./requirements.txt
 uvicorn main:app --workers=8
 
 # open new terminal
-python test.py
+python example.py
 ```
 
 ### with docker-compose
