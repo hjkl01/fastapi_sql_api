@@ -3,13 +3,10 @@ from datetime import datetime
 
 import redis
 from pydantic import BaseModel
-from loguru import logger
-from dynaconf import Dynaconf
-
 from fastapi import Depends
-from .user_api import get_current_username
 
-Config = Dynaconf(settings_files=[".secrets.toml"])
+from .user_api import get_current_username
+from settings import Config, logger
 
 
 class RedisItem(BaseModel):

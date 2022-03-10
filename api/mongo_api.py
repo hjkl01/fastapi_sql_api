@@ -1,14 +1,11 @@
 from datetime import datetime
 
-from dynaconf import Dynaconf
 import pymongo
 from pydantic import BaseModel
-from loguru import logger
-
 from fastapi import Depends
-from .user_api import get_current_username
 
-Config = Dynaconf(settings_files=[".secrets.toml"])
+from settings import Config, logger
+from .user_api import get_current_username
 
 
 class MongoItem(BaseModel):

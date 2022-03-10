@@ -1,9 +1,9 @@
-from dynaconf import Dynaconf
 import secrets
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 
-Config = Dynaconf(settings_files=[".secrets.toml"])
+from settings import Config
+
 security = HTTPBasic()
 
 
