@@ -5,3 +5,5 @@ redis
 pymongo
 loguru
 dynaconf
+pymysql
+records

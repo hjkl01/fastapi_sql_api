@@ -24,8 +24,8 @@ def send_request(url, data):
 
 def redis_test():
     urls = [
-        f"http://{Config.host}/redis/lpush/",
-        f"http://{Config.host}/redis/rpop/",
+        f"http://{Config.host}/api/redis/lpush/",
+        f"http://{Config.host}/api/redis/rpop/",
     ]
     for i in range(3):
         for url in urls:
@@ -46,7 +46,7 @@ def redis_test():
 
 def mongo_test_insert():
     # insert
-    url = f"http://{Config.host}/mongo/insert/"
+    url = f"http://{Config.host}/api/mongo/insert/"
     for i in range(10):
         print(url)
         db = "test"
@@ -66,7 +66,7 @@ def mongo_test_insert():
 
 def mongo_test_query():
     # query
-    url = f"http://{Config.host}/mongo/query/"
+    url = f"http://{Config.host}/api/mongo/query/"
     data = {
         "db": "test",
         "tablename": "tablename",
@@ -82,7 +82,21 @@ def mongo_test_query():
     print(resp.json())
 
 
+def mysql_test_query():
+    # query
+    url = f"http://{Config.host}/api/mysql/query/"
+    data = {
+        "db": "data",
+        "query": "select * from HighScores"
+        #  "query": "insert into HighScores (name, score) values ('Me', 90)"
+    }
+    resp = send_request(url, data=data)
+    print(resp.status_code)
+    print(resp.json())
+
+
 if __name__ == "__main__":
     #  redis_test()
     #  mongo_test_insert()
-    mongo_test_query()
+    #  mongo_test_query()
+    mysql_test_query()
