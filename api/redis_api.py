@@ -2,7 +2,7 @@ import json
 from datetime import datetime
 
 import redis
-from pydantic import BaseModel
+from pydantic import BaseModel, typing
 from fastapi import Depends
 
 from .user_api import get_current_username
@@ -12,14 +12,14 @@ from settings import Config, logger
 class RedisItem(BaseModel):
     db: int
     key: str
-    value = ""
+    values: typing.Any
 
 
 class RedisAPi:
     def __init__(self) -> None:
         pass
 
-    async def connect_redis(self, db):
+    def connect_redis(self, db):
         r = redis.Redis(
             host=Config.redis_host,
             port=Config.redis_port,
@@ -31,14 +31,14 @@ class RedisAPi:
     async def redis_lpush(self, item: RedisItem, username: str = Depends(get_current_username)) -> dict:
         logger.info(f"redis_lpush: {item}")
         r = self.connect_redis(item.db)
-        r.lpush(item.key, json.dumps(item.value, ensure_ascii=False))
+        r.lpush(item.key, json.dumps(item.values, ensure_ascii=False))
         length = r.llen(item.key)
         r.close()
 
         return {
             "success": "OK",
             "created_at": datetime.now(),
-            "result": item.value,
+            "result": item.values,
             "length": length,
         }
 

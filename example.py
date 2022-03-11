@@ -32,7 +32,7 @@ def redis_test():
             print(url)
             value = {f"dslakjdlksa{i}": f"dsljakdjsal{i}"}
             value = {f"广州{i}": f"dsljakdjsal{i}"}
-            data = {"db": 3, "key": "test", "value": value}
+            data = {"db": 3, "key": "test", "values": value}
             t = Thread(
                 target=send_request,
                 args=(
