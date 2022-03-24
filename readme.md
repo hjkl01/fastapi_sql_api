@@ -9,7 +9,9 @@
 git clone https://github.com/lesssound/fastapi_redis
 cd fastapi_redis 
 pip install -r ./requirements.txt
-# update .secrets.toml
+mv .secrets.toml.conf .secrets.toml
+mv .env.conf .env
+# update .secrets.toml and .env
 uvicorn main:app --workers=8
 
 # open new terminal
@@ -20,7 +22,9 @@ python example.py
 ```sh
 git clone https://github.com/lesssound/fastapi_redis
 cd fastapi_redis 
-# update .secrets.toml and config/redis.conf
+mv .secrets.toml.conf .secrets.toml
+mv .env.conf .env
+# update .secrets.toml .env and config/redis.conf
 mkdir -p data/redis
 docker-compose up -d
 ```
