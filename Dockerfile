@@ -1,7 +1,8 @@
 FROM alpine:3.15.0
 
 RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
-RUN apk add --no-cache python3 python3-dev py-pip g++ gcc libxml2 libxslt musl-dev libxslt-dev linux-headers
+RUN apk update && apk add --no-cache python3 python3-dev py-pip g++ gcc libxml2 libxslt musl-dev libxslt-dev linux-headers
+ENV TZ=Asia/Shanghai
 
 # http://bugs.python.org/issue19846
 # > At the moment, setting "LANG=C" on a Linux system *fundamentally breaks Python 3*, and that's not OK.

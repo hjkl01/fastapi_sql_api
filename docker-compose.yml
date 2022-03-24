@@ -50,3 +50,4 @@ services:
       - redis
     links:
       - redis
+      - mongo
