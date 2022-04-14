@@ -1,3 +1,4 @@
+import json
 from datetime import datetime
 
 import pymongo
@@ -60,7 +61,7 @@ class MongoAPI:
         return {
             "success": "OK",
             "created_at": datetime.now(),
-            "result": result,
+            "result": json.loads(json.dumps(result, default=str)),
         }
 
     async def mongo_update(self, item: MongoItem, username: str = Depends(get_current_username)):
