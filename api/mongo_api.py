@@ -15,6 +15,7 @@ class MongoItem(BaseModel):
     query: dict = None
     values: dict = None
     limit: int = 1
+    skip: int = 0
 
 
 class MongoAPI:
@@ -53,10 +54,12 @@ class MongoAPI:
         logger.info(item)
         mgclient, mgcol = self.connect_mongo(db=item.db, tablename=item.tablename)
         # values = {"abr": 1}
+        if item.skip > 100:
+            item.skip = 100
         if item.limit:
-            result = [q for q in mgcol.find(item.query, item.values).limit(item.limit)]
+            result = [q for q in mgcol.find(item.query, item.values).limit(item.limit).skip(item.skip)]
         else:
-            result = [q for q in mgcol.find(item.query, item.values)]
+            result = [q for q in mgcol.find(item.query, item.values).skip(item.skip)]
         mgclient.close()
         return {
             "success": "OK",
