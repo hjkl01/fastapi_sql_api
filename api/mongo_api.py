@@ -54,12 +54,10 @@ class MongoAPI:
         logger.info(item)
         mgclient, mgcol = self.connect_mongo(db=item.db, tablename=item.tablename)
         # values = {"abr": 1}
-        if item.skip > 100:
-            item.skip = 100
-        if item.limit:
-            result = [q for q in mgcol.find(item.query, item.values).limit(item.limit).skip(item.skip)]
-        else:
-            result = [q for q in mgcol.find(item.query, item.values).skip(item.skip)]
+        _limit = item.limit
+        if item.limit > 100 or item.limit is None or item.limit is False or item.limit == 0:
+            _limit = 100
+        result = [q for q in mgcol.find(item.query, item.values).limit(_limit).skip(item.skip)]
         mgclient.close()
         return {
             "success": "OK",
