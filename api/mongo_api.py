@@ -14,24 +14,24 @@ class MongoItem(BaseModel):
     tablename: str = "tablename"
     query: dict = None
     values: dict = None
-    limit: int = 1
+    limit: int = 100
     skip: int = 0
 
 
 class MongoAPI:
     def __init__(self) -> None:
-        pass
+        self.mgclient = None
 
-    def connect_mongo(self, db="db", tablename="tablename"):
-        mgclient = pymongo.MongoClient(Config.MONGO_URI)
-        mgdb = mgclient[db]
-        mgcol = mgdb[tablename]
-        return mgclient, mgcol
+    def connect_mongo(self):
+        self.mgclient = pymongo.MongoClient(Config.MONGO_URI, maxPoolSize=100)
+        return self.mgclient
 
     async def mongo_insert(self, item: MongoItem, username: str = Depends(get_current_username)) -> dict:
         logger.info(item)
-        mgclient, mgcol = self.connect_mongo(db=item.db, tablename=item.tablename)
-        #  mgol.save(item.values)
+        if not self.mgclient:
+            self.mgclient = self.connect_mongo()
+        mgcol = self.mgclient[item.db][item.tablename]
+
         result = None
         try:
             mgcol.insert_one(item.values)
@@ -43,7 +43,6 @@ class MongoAPI:
             else:
                 logger.info(err)
                 result = err
-        mgclient.close()
         return {
             "success": "OK" if result is None else "NG",
             "result": result,
@@ -52,13 +51,16 @@ class MongoAPI:
 
     async def mongo_query(self, item: MongoItem, username: str = Depends(get_current_username)) -> dict:
         logger.info(item)
-        mgclient, mgcol = self.connect_mongo(db=item.db, tablename=item.tablename)
+        if not self.mgclient:
+            self.mgclient = self.connect_mongo()
+            logger.warning('mongo re connect')
+        mgcol = self.mgclient[item.db][item.tablename]
+
         # values = {"abr": 1}
         _limit = item.limit
         if item.limit > 100 or item.limit is None or item.limit is False or item.limit == 0:
             _limit = 100
         result = [q for q in mgcol.find(item.query, item.values).limit(_limit).skip(item.skip)]
-        mgclient.close()
         return {
             "success": "OK",
             "created_at": datetime.now(),
@@ -67,7 +69,9 @@ class MongoAPI:
 
     async def mongo_update(self, item: MongoItem, username: str = Depends(get_current_username)):
         logger.info(item)
-        mgclient, mgcol = self.connect_mongo(db=item.db, tablename=item.tablename)
+        if not self.mgclient:
+            self.mgclient = self.connect_mongo()
+        mgcol = self.mgclient[item.db][item.tablename]
 
         result = None
         try:
@@ -77,7 +81,26 @@ class MongoAPI:
         except Exception as err:
             logger.info(err)
             result = str(err)
-        mgclient.close()
+        return {
+            "success": "OK",
+            "created_at": datetime.now(),
+            "result": result,
+        }
+
+    async def mongo_delete(self, item: MongoItem, username: str = Depends(get_current_username)):
+        logger.info(item)
+        if not self.mgclient:
+            self.mgclient = self.connect_mongo()
+        mgcol = self.mgclient[item.db][item.tablename]
+
+        result = None
+        try:
+            #  myquery = { "name": { "$regex": "^F" } }
+            #  newvalues = {"$set": {"comments": "values"}}
+            mgcol.update(item.query, item.values)
+        except Exception as err:
+            logger.info(err)
+            result = str(err)
         return {
             "success": "OK",
             "created_at": datetime.now(),
