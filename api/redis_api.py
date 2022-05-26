@@ -17,24 +17,23 @@ class RedisItem(BaseModel):
 
 class RedisAPi:
     def __init__(self) -> None:
-        self.r = None
+        pass
 
     def connect_redis(self, db):
-        self.r = redis.Redis(
+        r = redis.Redis(
             host=Config.redis_host,
             port=Config.redis_port,
             password=Config.redis_password,
             db=db,
         )
-        return self.r
+        return r
 
     async def redis_lpush(self, item: RedisItem, username: str = Depends(get_current_username)) -> dict:
         logger.info(f"redis_lpush: {item}")
-        if not self.r:
-            logger.warning('redis re connect')
-            self.r = self.connect_redis(item.db)
-        self.r.lpush(item.key, json.dumps(item.values, ensure_ascii=False))
-        length = self.r.llen(item.key)
+        r = self.connect_redis(item.db)
+        r.lpush(item.key, json.dumps(item.values, ensure_ascii=False))
+        length = r.llen(item.key)
+        r.close()
 
         return {
             "success": "OK",
@@ -48,11 +47,10 @@ class RedisAPi:
         logger.info("redis_rpop: {}".format(item))
         result = {"success": "OK", "created_at": datetime.now(), "result": None}
         try:
-            if not self.r:
-                logger.warning('redis re connect')
-                self.r = self.connect_redis(item.db)
-            res = json.loads(self.r.rpop(item.key))
-            length = self.r.llen(item.key)
+            r = self.connect_redis(item.db)
+            res = json.loads(r.rpop(item.key))
+            length = r.llen(item.key)
+            r.close()
             result["result"] = res
             result["length"] = length
             return result
