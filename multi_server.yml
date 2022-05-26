@@ -37,11 +37,11 @@ services:
       - ME_CONFIG_BASICAUTH_USERNAME=${MONGO_ROOT_USER}
       - ME_CONFIG_BASICAUTH_PASSWORD=${MONGO_ROOT_PASSWORD}
 
-  app:
+  app_1:
     build: .
-    container_name: fastapi_server_api
+    container_name: fastapi_server_api_1
     restart: unless-stopped
-    ports:
+    expose:
       - 6380:6380
     volumes:
       - ./:/app
@@ -50,3 +50,58 @@ services:
     links:
       - redis
       - mongo
+
+  app_2:
+    build: .
+    container_name: fastapi_server_api_2
+    restart: unless-stopped
+    expose:
+      - 6380:6380
+    volumes:
+      - ./:/app
+    depends_on:
+      - redis
+    links:
+      - redis
+      - mongo
+
+  app_3:
+    build: .
+    container_name: fastapi_server_api_3
+    restart: unless-stopped
+    expose:
+      - 6380:6380
+    volumes:
+      - ./:/app
+    depends_on:
+      - redis
+    links:
+      - redis
+      - mongo
+
+  app_4:
+    build: .
+    container_name: fastapi_server_api_4
+    restart: unless-stopped
+    expose:
+      - 6380:6380
+    volumes:
+      - ./:/app
+    depends_on:
+      - redis
+    links:
+      - redis
+      - mongo
+
+  nginx-load-balancing:
+    image: nginx:alpine
+    container_name: nginx-load-balancing
+    ports:
+      - "6380:80"
+    volumes:
+      - ./config/nginx.conf:/etc/nginx/nginx.conf
+    depends_on:
+      - app_1
+      - app_2
+      - app_3
+      - app_4
