@@ -2,14 +2,16 @@ import uvicorn
 from fastapi import Depends, FastAPI
 
 from api.user_api import get_current_username
-from api.redis_api import RedisAPi
+from api.redis_api import RedisAPI
 from api.mongo_api import MongoAPI
+from api.html_api import HtmlAPI
 from api.mysql_api import mysql_api
 
 app = FastAPI()
 
-redis_api = RedisAPi()
+redis_api = RedisAPI()
 mongo_api = MongoAPI()
+html_api = HtmlAPI()
 
 
 async def index():
@@ -27,6 +29,8 @@ app.add_api_route("/api/redis/rpop/", redis_api.redis_rpop, methods=["POST"])
 app.add_api_route("/api/mongo/insert/", mongo_api.mongo_insert, methods=["POST"])
 app.add_api_route("/api/mongo/query/", mongo_api.mongo_query, methods=["POST"])
 app.add_api_route("/api/mongo/update/", mongo_api.mongo_update, methods=["POST"])
+app.add_api_route("/api/html/insert/", html_api.html_insert, methods=["POST"])
+app.add_api_route("/api/html/query/", html_api.html_query, methods=["POST"])
 app.add_api_route("/api/mysql/query/", mysql_api, methods=["POST"])
 
 

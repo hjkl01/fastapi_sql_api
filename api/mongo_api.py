@@ -26,8 +26,7 @@ class MongoAPI:
         self.mgclient = pymongo.MongoClient(Config.MONGO_URI, maxPoolSize=100)
         return self.mgclient
 
-    async def mongo_insert(self, item: MongoItem, username: str = Depends(get_current_username)) -> dict:
-        logger.info(item)
+    def insert_api(self, item: MongoItem):
         if not self.mgclient:
             self.mgclient = self.connect_mongo()
         mgcol = self.mgclient[item.db][item.tablename]
@@ -43,14 +42,9 @@ class MongoAPI:
             else:
                 logger.info(err)
                 result = err
-        return {
-            "success": "OK" if result is None else "NG",
-            "result": result,
-            "created_at": datetime.now(),
-        }
+        return result
 
-    async def mongo_query(self, item: MongoItem, username: str = Depends(get_current_username)) -> dict:
-        logger.info(item)
+    def query_api(self, item: MongoItem):
         if not self.mgclient:
             self.mgclient = self.connect_mongo()
             logger.warning('mongo re connect')
@@ -61,6 +55,20 @@ class MongoAPI:
         if item.limit > 100 or item.limit is None or item.limit is False or item.limit == 0:
             _limit = 100
         result = [q for q in mgcol.find(item.query, item.values).limit(_limit).skip(item.skip)]
+        return result
+
+    async def mongo_insert(self, item: MongoItem, username: str = Depends(get_current_username)) -> dict:
+        logger.info(item)
+        result = self.insert_api(item)
+        return {
+            "success": "OK" if result is None else "NG",
+            "result": result,
+            "created_at": datetime.now(),
+        }
+
+    async def mongo_query(self, item: MongoItem, username: str = Depends(get_current_username)) -> dict:
+        logger.info(item)
+        result = self.query_api(item)
         return {
             "success": "OK",
             "created_at": datetime.now(),

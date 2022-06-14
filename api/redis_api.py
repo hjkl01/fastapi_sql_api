@@ -15,7 +15,7 @@ class RedisItem(BaseModel):
     values: typing.Any
 
 
-class RedisAPi:
+class RedisAPI:
     def __init__(self) -> None:
         pass
 

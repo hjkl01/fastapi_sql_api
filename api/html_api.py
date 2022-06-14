@@ -1,74 +1,107 @@
 # -*- coding: UTF-8 -*-
-'''
+"""
 @Project ：work 
 @File ：html_api.py
-@IDE  ：PyCharm 
+@mongo_idE  ：PyCharm 
 @Author ：Sun Li
-@Date ：2022/6/13 15:08 
-'''
+@date ：2022/6/13 15:08 
+"""
 
-import json
-from datetime import datetime
-import zlib
 import os
+import zlib
+from datetime import datetime
+
 from pydantic import BaseModel
+from fastapi import Depends
+
 from settings import Config, logger
 from .user_api import get_current_username
-
+from .mongo_api import MongoItem, MongoAPI
 
 
 class htmlItem(BaseModel):
-    name: str = "test"
-    date: str = datetime.now().strftime("%Y%m%d")
-    filename: str = "test"
-    cont: str = ""
+    mongo_db: str = "test"
+    mongo_tablename: str = datetime.now().strftime("%Y%m%d")
+    mongo_id: str = None
+    text: str = ""
     limit: int = 20
+    skip: int = 0
 
-class htmlapi:
+
+class HtmlAPI:
     def __init__(self):
-        self.path = Config.HTML_HOST
-    def html_if_exist(self, name, date):
-        path = self.path + rf'\{name}' + rf'\{date}'
-        if not os.path.exists(path):
-            os.makedirs(path)
-        return
-    def html_zlib(self, cont):
-        z = zlib.compress(cont.encode())
+        self.path = Config.HTML_PATH
+
+    def html_zlib(self, text):
+        z = zlib.compress(text.encode())
         res = zlib.decompress(z).decode()
         return res
-    # async def html_insert(self, item: htmlItem, username: str = Depends(get_current_username)) -> dict:
-    async def html_insert(self, item: htmlItem) -> dict:
+
+    async def html_insert(self, item: htmlItem, username: str = Depends(get_current_username)) -> dict:
         logger.info(item)
-        self.html_if_exist(item.name, item.date)
-        content = self.html_zlib(item.cont)
-        filepath = self.path + rf'\{item.name}' + rf'\{item.date}' + rf'\{item.filename}.html'
+
+        # if path exists
+        pre_path = f"{self.path}/{item.mongo_db.replace('/','')}/{item.mongo_tablename.replace('/','')}"
+        if not os.path.exists(pre_path):
+            os.makedirs(pre_path)
+
+        # compress
+        content = zlib.decompress(zlib.compress(item.text.encode())).decode()
+        filepath = f"{pre_path}/{item.mongo_id.replace('/','')}"
+
+        # save to path
+        result = None
         try:
-            with open(filepath, 'wb') as f:
-                f.write(content.encode())
-            result = "save success"
+            with open(filepath, "w") as f:
+                f.write(content)
             logger.info(result)
         except Exception as err:
-                logger.err(err)
-                result = err
+            logger.error(err)
+            result = err
+
+        # save to mongo
+        item = {
+            "db": "html",
+            "tablename": f"{item.mongo_db}_{item.mongo_tablename}",
+            "values": {
+                "_mongo_id": item.mongo_id,
+                "path": f"{item.mongo_db.replace('/','')}/{item.mongo_tablename.replace('/','')}/{item.mongo_id.replace('/','')}",
+            },
+        }
+        item = MongoItem(**item)
+        logger.debug(item.dict())
+        result = MongoAPI().insert_api(item)
+
         return {
-            "success": "OK" if result == "save success" else "NG",
+            "success": "OK" if result is None else "NG",
             "result": result,
             "created_at": datetime.now(),
         }
-    async def html_query(self, item: htmlItem) -> dict:
-        res = []
+
+    async def html_query(self, item: htmlItem, username: str = Depends(get_current_username)) -> dict:
         logger.info(item)
-        target_path = self.path + rf'\{item.name}' + rf'\{item.date}'
+        target_path = f"{self.path}/{item.mongo_db.replace('/','')}/{item.mongo_tablename.replace('/','')}"
+
         if item.limit > 20 or item.limit is None or item.limit is False or item.limit == 0:
             _limit = 20
         else:
             _limit = item.limit
+
+        result = []
         try:
             all_files = os.listdir(target_path)
-
-            for i in range(item.skip*_limit, len(all_files)):
-            # f = open("GP.html", "r", encoding='utf-8')
-            # html = f.read()
+            logger.debug(all_files)
+            for i in range(item.skip * _limit, len(all_files)):
+                logger.debug(i)
+                d = {"mongo_id": all_files[i]}
+                with open(f"{target_path}/{all_files[i]}", "r") as file:
+                    d["text"] = file.read()
+                result.append(d)
         except Exception as err:
-            logger.err(err)
-        return res
+            logger.error(err)
+
+        return {
+            "success": "OK" if result != [] else "NG",
+            "result": result,
+            "created_at": datetime.now(),
+        }
