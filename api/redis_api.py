@@ -48,11 +48,12 @@ class RedisAPI:
         result = {"success": "OK", "created_at": datetime.now(), "result": None}
         try:
             r = self.connect_redis(item.db)
-            res = json.loads(r.rpop(item.key))
-            length = r.llen(item.key)
+            temp = r.rpop(item.key)
+            if temp:
+                result["result"] = json.loads(temp)
+
+            result["length"] = r.llen(item.key)
             r.close()
-            result["result"] = res
-            result["length"] = length
             return result
         except Exception as err:
             logger.error(err)
