@@ -22,7 +22,7 @@ from .mongo_api import MongoItem, MongoAPI
 class htmlItem(BaseModel):
     mongo_db: str = "test"
     mongo_tablename: str = datetime.now().strftime("%Y%m%d")
-    mongo_id: str = None
+    mongo_id: str
     text: str = ""
     limit: int = 20
     skip: int = 0
@@ -64,7 +64,7 @@ class HtmlAPI:
             "db": "html",
             "tablename": f"{item.mongo_db}_{item.mongo_tablename}",
             "values": {
-                "_mongo_id": item.mongo_id,
+                "_id": item.mongo_id,
                 "path": f"{item.mongo_db.replace('/','')}/{item.mongo_tablename.replace('/','')}/{item.mongo_id.replace('/','')}",
             },
         }
