@@ -2,7 +2,7 @@
 """
 @Project ：work 
 @File ：html_api.py
-@mongo_idE  ：PyCharm 
+@idE  ：PyCharm 
 @Author ：Sun Li
 @date ：2022/6/13 15:08 
 """
@@ -20,9 +20,9 @@ from .mongo_api import MongoItem, MongoAPI
 
 
 class htmlItem(BaseModel):
-    mongo_db: str = "test"
-    mongo_tablename: str = datetime.now().strftime("%Y%m%d")
-    mongo_id: str
+    db: str = "test"
+    tablename: str = datetime.now().strftime("%Y%m%d")
+    id: str
     text: str = ""
     limit: int = 20
     skip: int = 0
@@ -41,13 +41,13 @@ class HtmlAPI:
         logger.info(item)
 
         # if path exists
-        pre_path = f"{self.path}/{item.mongo_db.replace('/','')}/{item.mongo_tablename.replace('/','')}"
+        pre_path = f"{self.path}/{item.db.replace('/','')}/{item.tablename.replace('/','')}"
         if not os.path.exists(pre_path):
             os.makedirs(pre_path)
 
         # compress
         content = zlib.decompress(zlib.compress(item.text.encode())).decode()
-        filepath = f"{pre_path}/{item.mongo_id.replace('/','')}"
+        filepath = f"{pre_path}/{item.id.replace('/','')}"
 
         # save to path
         result = None
@@ -62,10 +62,10 @@ class HtmlAPI:
         # save to mongo
         item = {
             "db": "html",
-            "tablename": f"{item.mongo_db}_{item.mongo_tablename}",
+            "tablename": f"{item.db}_{item.tablename}",
             "values": {
-                "_id": item.mongo_id,
-                "path": f"{item.mongo_db.replace('/','')}/{item.mongo_tablename.replace('/','')}/{item.mongo_id.replace('/','')}",
+                "_id": item.id,
+                "path": f"{item.db.replace('/','')}/{item.tablename.replace('/','')}/{item.id.replace('/','')}",
             },
         }
         item = MongoItem(**item)
@@ -80,7 +80,7 @@ class HtmlAPI:
 
     async def html_query(self, item: htmlItem, username: str = Depends(get_current_username)) -> dict:
         logger.info(item)
-        target_path = f"{self.path}/{item.mongo_db.replace('/','')}/{item.mongo_tablename.replace('/','')}"
+        target_path = f"{self.path}/{item.db.replace('/','')}/{item.tablename.replace('/','')}"
 
         if item.limit > 20 or item.limit is None or item.limit is False or item.limit == 0:
             _limit = 20
@@ -93,7 +93,7 @@ class HtmlAPI:
             logger.debug(all_files)
             for i in range(item.skip * _limit, len(all_files)):
                 logger.debug(i)
-                d = {"mongo_id": all_files[i]}
+                d = {"id": all_files[i]}
                 with open(f"{target_path}/{all_files[i]}", "r") as file:
                     d["text"] = file.read()
                 result.append(d)
