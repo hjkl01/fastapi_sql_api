@@ -93,7 +93,7 @@ class HtmlAPI:
             for i in range(item.skip * _limit, (item.skip * _limit)+_limit):
                 d = {"_id": all_files[i]}
                 with open(f"{target_path}/{all_files[i]}", "r") as file:
-                    d["text"] = file.read()
+                    d["result"] = file.read()
                 result.append(d)
         except Exception as err:
             logger.error(err)
