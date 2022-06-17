@@ -82,21 +82,30 @@ class HtmlAPI:
         logger.info(item)
         target_path = f"{self.path}/{item.db.replace('/','')}/{item.tablename.replace('/','')}"
 
-        if item.limit > 20 or item.limit is None or item.limit is False or item.limit == 0:
-            _limit = 20
-        else:
-            _limit = item.limit
-
         result = []
-        try:
-            all_files = os.listdir(target_path)
-            for i in range(item.skip * _limit, (item.skip * _limit)+_limit):
-                d = {"_id": all_files[i]}
-                with open(f"{target_path}/{all_files[i]}", "r") as file:
-                    d["result"] = file.read()
-                result.append(d)
-        except Exception as err:
-            logger.error(err)
+        if item.id != "":
+            id_path = f"{target_path}/{item.id.replace('/','')}"
+            if os.path.exists(id_path):
+                with open(id_path, 'r') as file:
+                    d = {'_id': item.id.replace('/', '')}
+                    d['result'] = file.read()
+                    result.append(d)
+        else:
+            if item.limit > 20 or item.limit is None or item.limit is False or item.limit == 0:
+                _limit = 20
+            else:
+                _limit = item.limit
+
+            result = []
+            try:
+                all_files = os.listdir(target_path)
+                for i in range(item.skip * _limit, (item.skip * _limit)+_limit):
+                    d = {"_id": all_files[i]}
+                    with open(f"{target_path}/{all_files[i]}", "r") as file:
+                        d["result"] = file.read()
+                    result.append(d)
+            except Exception as err:
+                logger.error(err)
 
         return {
             "success": "OK" if result != [] else "NG",
