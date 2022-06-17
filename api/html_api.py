@@ -23,7 +23,7 @@ class htmlItem(BaseModel):
     db: str = "test"
     tablename: str = datetime.now().strftime("%Y%m%d")
     id: str = ""
-    text: str = ""
+    values: str = ""
     limit: int = 20
     skip: int = 0
 
@@ -32,8 +32,8 @@ class HtmlAPI:
     def __init__(self):
         self.path = Config.HTML_PATH
 
-    def html_zlib(self, text):
-        z = zlib.compress(text.encode())
+    def html_zlib(self, values):
+        z = zlib.compress(values.encode())
         res = zlib.decompress(z).decode()
         return res
 
@@ -46,7 +46,7 @@ class HtmlAPI:
             os.makedirs(pre_path)
 
         # compress
-        content = zlib.decompress(zlib.compress(item.text.encode())).decode()
+        content = zlib.decompress(zlib.compress(item.values.encode())).decode()
         filepath = f"{pre_path}/{item.id.replace('/','')}"
 
         # save to path
