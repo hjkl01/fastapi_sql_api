@@ -22,7 +22,7 @@ from .mongo_api import MongoItem, MongoAPI
 class htmlItem(BaseModel):
     db: str = "test"
     tablename: str = datetime.now().strftime("%Y%m%d")
-    id: str
+    id: str = ""
     text: str = ""
     limit: int = 20
     skip: int = 0
