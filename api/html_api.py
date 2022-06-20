@@ -99,7 +99,7 @@ class HtmlAPI:
             result = []
             try:
                 all_files = os.listdir(target_path)
-                for i in range(item.skip * _limit, (item.skip * _limit)+_limit):
+                for i in range(item.skip, item.skip + _limit):
                     d = {"_id": all_files[i]}
                     with open(f"{target_path}/{all_files[i]}", "r") as file:
                         d["result"] = file.read()
